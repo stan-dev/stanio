@@ -40,32 +40,35 @@ class Parameter:
         self, src: np.ndarray, *, offset: int = 0, original_shape: bool = True
     ):
         if original_shape:
-            dims = src.shape[1:]
+            dims = src.shape[:-1]
         else:
             dims = (-1,)
         start = self.start_idx + offset
         end = self.end_idx + offset
         if self.type == ParameterType.SCALAR:
-            return src[start:end].reshape(*self.dimensions, *dims, order="F")
+            return src[..., start:end].reshape(*dims, *self.dimensions, order="F")
         elif self.type == ParameterType.COMPLEX:
-            ret = src[start:end].reshape(2, *self.dimensions, -1, order="F")
-            ret = ret[::2, ...] + 1j * ret[1::2, ...]
-            return ret.squeeze().reshape(*self.dimensions, *dims, order="F")
+            ret = src[..., start:end].reshape(-1, 2, *self.dimensions, order="F")
+            ret = ret[:, ::2] + 1j * ret[:, 1::2]
+            return ret.squeeze().reshape(*dims, *self.dimensions, order="F")
         elif self.type == ParameterType.TUPLE:
-            out = np.empty((prod(self.dimensions), prod(src.shape[1:])), dtype=object)
+            out = np.empty((prod(src.shape[:-1]), prod(self.dimensions)), dtype=object)
             for idx in range(self.num_elts()):
                 off = idx * self.elt_size() // self.num_elts()
                 elts = [
                     param.do_reshape(src, offset=off + offset, original_shape=False)
                     for param in self.contents
                 ]
-                for i in range(elts[-1].shape[-1]):
-                    out[idx, i] = tuple(
+                for elt in elts:
+                    print(elt.shape)
+                for i in range(elts[0].shape[0]):
+                    out[i, idx] = tuple(
                         # extra work to avoid scalar arrays
-                        e.item() if (e := elt[..., i]).shape == () else e
+                        elt[i]
+                        # e.item() if (e := elt[i]).shape == () else e
                         for elt in elts
                     )
-            return out.reshape(*self.dimensions, *dims, order="F")
+            return out.reshape(*dims, *self.dimensions, order="F")
 
 
 def _munge_first_tuple(tup: str) -> str:

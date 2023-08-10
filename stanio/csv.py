@@ -23,4 +23,4 @@ def read_csv(filenames: Union[str, List[str]]) -> Tuple[str, np.ndarray]:
                 assert header == file_header, "Headers do not match"
             data[i] = np.loadtxt(fd, delimiter=",", comments="#")
 
-    return header.strip(), np.stack(data, axis=0).T
+    return header.strip(), np.stack(data, axis=0)
