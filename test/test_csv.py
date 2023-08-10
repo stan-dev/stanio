@@ -15,8 +15,8 @@ def test_single_file():
         header
         == "lp__,accept_stat__,stepsize__,treedepth__,n_leapfrog__,divergent__,energy__,theta"
     )
-    assert data.shape == (8, 1000, 1)
-    assert 0.2 < np.mean(data, axis=(1, 2))[7] < 0.3
+    assert data.shape == (1, 1000, 8)
+    assert 0.2 < np.mean(data, axis=(0, 1))[7] < 0.3
 
 
 def test_multiple_files():
@@ -26,8 +26,8 @@ def test_multiple_files():
         header
         == "lp__,accept_stat__,stepsize__,treedepth__,n_leapfrog__,divergent__,energy__,theta"
     )
-    assert data.shape == (8, 1000, 4)
-    assert 0.2 < np.mean(data, axis=(1, 2))[7] < 0.3
+    assert data.shape == (4, 1000, 8)
+    assert 0.2 < np.mean(data, axis=(0, 1))[7] < 0.3
 
 
 def test_mismatched_files():
