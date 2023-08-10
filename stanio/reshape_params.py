@@ -85,7 +85,7 @@ def _get_base_name(param: str) -> str:
 
 
 # TODO: get rid of 'base' argument?
-def _from_header(header: str, base: int = 0) -> list[Parameter]:
+def _from_header(header: str, base: int = 0) -> List[Parameter]:
     header = header.strip() + ",__dummy"
     entries = header.split(",")
     params = []
@@ -154,7 +154,7 @@ class ParameterAccessor:
         header, data = read_csv(filename)
         return cls.from_header(header, data)
 
-    def as_dict(self) -> dict[str, np.ndarray]:
+    def as_dict(self) -> Dict[str, np.ndarray]:
         return {
             param.name: param.do_reshape(self._data) for param in self.params.values()
         }
