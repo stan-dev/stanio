@@ -28,7 +28,7 @@ jobs:
 
       - name: Install dependencies (python)
         run: |
-          python -m pip install --upgrade pip wheel pytest codecov
+          python -m pip install --upgrade pip wheel pytest codecov pytest-cov
 
       - name: Install package
         run: |
