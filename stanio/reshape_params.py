@@ -1,5 +1,5 @@
 from math import prod
-from attr import dataclass
+from dataclasses import dataclass
 from enum import Enum
 import numpy as np
 
@@ -156,6 +156,3 @@ class ParameterAccessor:
 
     def __getitem__(self, key: str) -> np.ndarray:
         return self.params[key].do_reshape(self._data)
-
-    def data(self) -> np.ndarray:
-        return self._data

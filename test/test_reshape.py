@@ -191,7 +191,7 @@ def test_tuple_values(tuple_data):
     # fixed param
     assert (tuple_data["lp__"] == 0).all()
 
-    # assert tuple_data["base"][0, 0] == 1.585448118
+    assert tuple_data["base"][0, 0] == -0.5216157371
 
     check_tuples(tuple_data, 0, 0)
     check_tuples(tuple_data, -1, -1)

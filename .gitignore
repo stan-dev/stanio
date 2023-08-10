@@ -4,3 +4,4 @@ stanio.egg-info/
 
 *.pyc
 *.hpp
+.coverage

@@ -10,6 +10,15 @@ dependencies = ["numpy"]
 requires-python = ">=3.7"
 license = { text = "BSD-3-Clause" }
 
+[project.optional-dependencies]
+test = [
+    "pandas",
+    "pytest",
+    "pytest-cov",
+]
 
 [tool.isort]
 profile = "black"
+
+[tool.coverage.run]
+source = ["stanio"]
