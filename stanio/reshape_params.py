@@ -1,7 +1,10 @@
-from math import prod
 from dataclasses import dataclass
 from enum import Enum
+from math import prod
+from typing import Any, Dict, List, Tuple
+
 import numpy as np
+import numpy.typing as npt
 
 from .csv import read_csv
 
@@ -22,23 +25,23 @@ class Parameter:
     end_idx: int
     # rectangular dimensions of the parameter (e.g. (2, 3) for a 2x3 matrix)
     # For nested parameters, this will be the dimensions of the outermost array.
-    dimensions: tuple[int]
+    dimensions: Tuple[int, ...]
     # type of the parameter
     type: ParameterType
     # list of nested parameters
-    contents: list["Parameter"]
+    contents: List["Parameter"]
 
-    def num_elts(self):
+    def num_elts(self) -> int:
         return prod(self.dimensions)
 
-    def elt_size(self):
+    def elt_size(self) -> int:
         return self.end_idx - self.start_idx
 
     # total size is elt_size * num_elts
 
     def do_reshape(
         self, src: np.ndarray, *, offset: int = 0, original_shape: bool = True
-    ):
+    ) -> npt.NDArray[Any]:
         if original_shape:
             dims = src.shape[:-1]
         else:
@@ -52,7 +55,9 @@ class Parameter:
             ret = ret[:, ::2] + 1j * ret[:, 1::2]
             return ret.squeeze().reshape(*dims, *self.dimensions, order="F")
         elif self.type == ParameterType.TUPLE:
-            out = np.empty((prod(src.shape[:-1]), prod(self.dimensions)), dtype=object)
+            out: np.ndarray = np.empty(
+                (prod(src.shape[:-1]), prod(self.dimensions)), dtype=object
+            )
             for idx in range(self.num_elts()):
                 off = idx * self.elt_size() // self.num_elts()
                 elts = [
@@ -134,7 +139,7 @@ def _from_header(header: str, base: int = 0) -> list[Parameter]:
 
 
 class ParameterAccessor:
-    def __init__(self, params: dict[Parameter], data: np.ndarray):
+    def __init__(self, params: Dict[str, Parameter], data: np.ndarray):
         self.params = params
         self._data = data
         # TODO: consider caching the reshaped data

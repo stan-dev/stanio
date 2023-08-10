@@ -2,6 +2,7 @@ import collections
 import json
 import os
 import tempfile
+from typing import Any, Dict, List
 
 import numpy as np
 import pandas as pd
@@ -87,11 +88,11 @@ def test_pandas(TMPDIR) -> None:
 
 
 def test_empty(TMPDIR) -> None:
-    dict_zero_vec = {"a": []}
+    dict_zero_vec: Dict[str, List[Any]] = {"a": []}
     file_zero_vec = os.path.join(TMPDIR, "empty_vec.json")
     check_roundtrips(file_zero_vec, dict_zero_vec)
 
-    dict_zero_matrix = {"a": [[], [], []]}
+    dict_zero_matrix: Dict[str, List[Any]] = {"a": [[], [], []]}
     file_zero_matrix = os.path.join(TMPDIR, "empty_matrix.json")
     check_roundtrips(file_zero_matrix, dict_zero_matrix)
 
