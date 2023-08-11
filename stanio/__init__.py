@@ -1,5 +1,5 @@
 from .csv import read_csv
 from .json import write_stan_json
-from .reshape_params import ParameterAccessor
+from .reshape import Parameter, parse_header, stan_variables
 
-__all__ = ["read_csv", "write_stan_json", "ParameterAccessor"]
+__all__ = ["read_csv", "write_stan_json", "Parameter", "parse_header", "stan_variables"]

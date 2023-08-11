@@ -40,7 +40,7 @@ class Parameter:
 
     # total size is elt_size * num_elts
 
-    def do_reshape(
+    def extract_reshape(
         self, src: np.ndarray, *, offset: int = 0, original_shape: bool = True
     ) -> npt.NDArray[Any]:
         if original_shape:
@@ -62,7 +62,7 @@ class Parameter:
             for idx in range(self.num_elts()):
                 off = idx * self.elt_size() // self.num_elts()
                 elts = [
-                    param.do_reshape(src, offset=start + off, original_shape=False)
+                    param.extract_reshape(src, offset=start + off, original_shape=False)
                     for param in self.contents
                 ]
                 for elt in elts:
@@ -81,6 +81,7 @@ def _get_base_name(param: str) -> str:
 
 
 def _from_header(header: str) -> List[Parameter]:
+    # appending __dummy ensures one extra iteration in the later loop
     header = header.strip() + ",__dummy"
     entries = header.split(",")
     params = []
@@ -131,27 +132,11 @@ def _from_header(header: str) -> List[Parameter]:
     return params
 
 
-# does this really need to be a whole class?
-class ParameterAccessor:
-    def __init__(self, params: Dict[str, Parameter], data: np.ndarray):
-        self.params = params
-        self._data = data
-        # TODO: consider caching the reshaped data
+def parse_header(header: str) -> Dict[str, Parameter]:
+    return {param.name: param for param in _from_header(header)}
 
-    @classmethod
-    def from_header(cls, header: str, data: np.ndarray) -> "ParameterAccessor":
-        params = {param.name: param for param in _from_header(header)}
-        return cls(params, data)
 
-    @classmethod
-    def from_file(cls, filename: str) -> "ParameterAccessor":
-        header, data = read_csv(filename)
-        return cls.from_header(header, data)
-
-    def as_dict(self) -> Dict[str, np.ndarray]:
-        return {
-            param.name: param.do_reshape(self._data) for param in self.params.values()
-        }
-
-    def __getitem__(self, key: str) -> np.ndarray:
-        return self.params[key].do_reshape(self._data)
+def stan_variables(
+    parameters: Dict[str, Parameter], source: npt.NDArray[np.float64]
+) -> Dict[str, npt.NDArray[Any]]:
+    return {param.name: param.extract_reshape(source) for param in parameters.values()}

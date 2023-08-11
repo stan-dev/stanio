@@ -4,7 +4,8 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from stanio.reshape_params import ParameterAccessor
+from stanio.reshape import *
+from stanio.csv import read_csv
 
 HERE = Path(__file__).parent
 DATA = HERE / "data"
@@ -14,8 +15,9 @@ DATA = HERE / "data"
 @pytest.fixture(scope="module")
 def rect_data():
     files = [DATA / "rectangles" / f"output_{i}.csv" for i in range(1, 5)]
-    accessor = ParameterAccessor.from_file(files)
-    yield accessor.as_dict()
+    header, data = read_csv(files)
+    params = parse_header(header)
+    yield stan_variables(params, data)
 
 
 def test_basic_shapes(rect_data):
@@ -24,12 +26,7 @@ def test_basic_shapes(rect_data):
 
     assert rect_data["v"].shape == (4, 1000, 2)
     assert rect_data["r"].shape == (4, 1000, 3)
-    assert rect_data["m"].shape == (
-        4,
-        1000,
-        2,
-        3,
-    )
+    assert rect_data["m"].shape == (4, 1000, 2, 3)
     assert rect_data["threeD"].shape == (4, 1000, 4, 2, 3)
 
     assert rect_data["z"].shape == (4, 1000)
@@ -97,8 +94,9 @@ def test_basic_values(rect_data):
 @pytest.fixture(scope="module")
 def tuple_data():
     files = [DATA / "tuples" / f"output_{i}.csv" for i in range(1, 5)]
-    accessor = ParameterAccessor.from_file(files)
-    yield accessor.as_dict()
+    header, data = read_csv(files)
+    params = parse_header(header)
+    yield stan_variables(params, data)
 
 
 def test_tuple_shapes(tuple_data):
