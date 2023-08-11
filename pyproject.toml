@@ -22,3 +22,9 @@ profile = "black"
 
 [tool.coverage.run]
 source = ["stanio"]
+
+[tool.setuptools.package-data]
+"stanio" = ["py.typed"]
+
+[tool.setuptools.packages.find]
+where = ["."]

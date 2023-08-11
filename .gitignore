@@ -2,6 +2,8 @@
 .mypy_cache/
 __pycache__/
 stanio.egg-info/
+build/
+dist/
 
 *.pyc
 *.hpp

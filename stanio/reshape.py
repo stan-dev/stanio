@@ -1,12 +1,10 @@
 from dataclasses import dataclass
 from enum import Enum
 from math import prod
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, Iterable, List, Tuple
 
 import numpy as np
 import numpy.typing as npt
-
-from .csv import read_csv
 
 
 class ParameterType(Enum):
@@ -31,6 +29,9 @@ class Parameter:
     type: ParameterType
     # list of nested parameters
     contents: List["Parameter"]
+
+    def columns(self) -> Iterable[int]:
+        return range(self.start_idx, self.end_idx)
 
     def num_elts(self) -> int:
         return prod(self.dimensions)
@@ -65,8 +66,6 @@ class Parameter:
                     param.extract_reshape(src, offset=start + off, original_shape=False)
                     for param in self.contents
                 ]
-                for elt in elts:
-                    print(elt.shape)
                 for i in range(elts[0].shape[0]):
                     out[i, idx] = tuple(elt[i] for elt in elts)
             return out.reshape(*dims, *self.dimensions, order="F")
