@@ -20,7 +20,8 @@ class Parameter:
     # name of the parameter as given in stan. For nested parameters, this is a dummy name
     name: str
     # where to start (resp. end) reading from the flattened array.
-    # For arrays with nested parameters, this will be for the first element.
+    # For arrays with nested parameters, this will be for the first element
+    # and is relative to the start of the parent
     start_idx: int
     end_idx: int
     # rectangular dimensions of the parameter (e.g. (2, 3) for a 2x3 matrix)
@@ -61,18 +62,13 @@ class Parameter:
             for idx in range(self.num_elts()):
                 off = idx * self.elt_size() // self.num_elts()
                 elts = [
-                    param.do_reshape(src, offset=off + offset, original_shape=False)
+                    param.do_reshape(src, offset=start + off, original_shape=False)
                     for param in self.contents
                 ]
                 for elt in elts:
                     print(elt.shape)
                 for i in range(elts[0].shape[0]):
-                    out[i, idx] = tuple(
-                        # extra work to avoid scalar arrays
-                        elt[i]
-                        # e.item() if (e := elt[i]).shape == () else e
-                        for elt in elts
-                    )
+                    out[i, idx] = tuple(elt[i] for elt in elts)
             return out.reshape(*dims, *self.dimensions, order="F")
 
 
@@ -84,12 +80,11 @@ def _get_base_name(param: str) -> str:
     return param.split(".")[0].split(":")[0]
 
 
-# TODO: get rid of 'base' argument?
-def _from_header(header: str, base: int = 0) -> List[Parameter]:
+def _from_header(header: str) -> List[Parameter]:
     header = header.strip() + ",__dummy"
     entries = header.split(",")
     params = []
-    start_idx = base
+    start_idx = 0
     name = _get_base_name(entries[0])
     for i in range(0, len(entries) - 1):
         entry = entries[i]
@@ -107,7 +102,7 @@ def _from_header(header: str, base: int = 0) -> List[Parameter]:
                     Parameter(
                         name=name,
                         start_idx=start_idx,
-                        end_idx=base + i + 1,
+                        end_idx=i + 1,
                         dimensions=tuple(map(int, dims)),
                         type=type,
                         contents=[],
@@ -116,28 +111,27 @@ def _from_header(header: str, base: int = 0) -> List[Parameter]:
             else:
                 dims = entry.split(":")[0].split(".")[1:]
                 munged_header = ",".join(
-                    dict.fromkeys(
-                        map(_munge_first_tuple, entries[start_idx - base : i + 1])
-                    )
+                    dict.fromkeys(map(_munge_first_tuple, entries[start_idx : i + 1]))
                 )
 
                 params.append(
                     Parameter(
                         name=name,
                         start_idx=start_idx,
-                        end_idx=base + i + 1,
+                        end_idx=i + 1,
                         dimensions=tuple(map(int, dims)),
                         type=ParameterType.TUPLE,
-                        contents=_from_header(munged_header, base=start_idx),
+                        contents=_from_header(munged_header),
                     )
                 )
 
-            start_idx = base + i + 1
+            start_idx = i + 1
             name = next_name
 
     return params
 
 
+# does this really need to be a whole class?
 class ParameterAccessor:
     def __init__(self, params: Dict[str, Parameter], data: np.ndarray):
         self.params = params
