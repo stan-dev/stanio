@@ -215,21 +215,31 @@ def test_preserve_1d():
     header, data = read_csv(DATA / "edges" / "oned_opt.csv")
     params = parse_header(header)
     A = params["A"]
+    dummy = params["dummy"]
     assert A.extract_reshape(data).shape == (1, 2, 1, 3)
+    assert dummy.extract_reshape(data).shape == (1, 1, 1, 1)
     assert A.extract_reshape(data.squeeze()).shape == (2, 1, 3)
+    assert dummy.extract_reshape(data.squeeze()).shape == (1, 1, 1)
 
     assert len(A.columns()) == A.num_elts() == 2 * 1 * 3
 
     header2, data2 = read_csv(DATA / "edges" / "oned_sample.csv")
     params2 = parse_header(header2)
     A2 = params2["A"]
-    assert A2.extract_reshape(data2).shape == (1, 1000, 2, 1, 3)
+    dummy2 = params2["dummy"]
 
-    extracted = A2.extract_reshape(data2.squeeze())
-    assert extracted.shape == (1000, 2, 1, 3)
+    assert A2.extract_reshape(data2).shape == (1, 1000, 2, 1, 3)
+    assert dummy2.extract_reshape(data2).shape == (1, 1000, 1, 1, 1)
+
+    A_extracted = A2.extract_reshape(data2.squeeze())
+    dummy_extracted = dummy2.extract_reshape(data2.squeeze())
+    assert A_extracted.shape == (1000, 2, 1, 3)
+    assert dummy_extracted.shape == (1000, 1, 1, 1)
+
     base = params2["base"].extract_reshape(data2.squeeze())
     for i in range(1000):
         b = base[i]
         np.testing.assert_almost_equal(
-            extracted[i], np.array([[[b, b, b * 2]], [[b * 3, b * 4, b * 5]]])
+            A_extracted[i], np.array([[[b, b, b * 2]], [[b * 3, b * 4, b * 5]]])
         )
+        np.testing.assert_almost_equal(dummy_extracted[i, 0, 0, 0], b * 10)

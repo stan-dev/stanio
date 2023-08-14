@@ -2,7 +2,7 @@
 # stan_version_minor = 32
 # stan_version_patch = 2
 # model = oned_model
-# start_datetime = 2023-08-14 18:16:14 UTC
+# start_datetime = 2023-08-14 18:58:51 UTC
 # method = optimize
 #   optimize
 #     algorithm = lbfgs (Default)
@@ -22,7 +22,7 @@
 #   file =  (Default)
 # init = 2 (Default)
 # random
-#   seed = 4234991634 (Default)
+#   seed = 4237548930 (Default)
 # output
 #   file = output.csv (Default)
 #   diagnostic_file =  (Default)
@@ -32,5 +32,5 @@
 # num_threads = 1 (Default)
 # stanc_version = %%NAME%%3 %%VERSION%%
 # stancflags = 
-lp__,base,A.1.1.1,A.2.1.1,A.1.1.2,A.2.1.2,A.1.1.3,A.2.1.3
-0,0.2404014493,0.2404014493,0.721204348,0.2404014493,0.9616057973,0.4808028987,1.202007247
+lp__,base,A.1.1.1,A.2.1.1,A.1.1.2,A.2.1.2,A.1.1.3,A.2.1.3,dummy.1.1.1
+0,-0.6597839217,-0.6597839217,-1.979351765,-0.6597839217,-2.639135687,-1.319567843,-3.298919609,-6.597839217
