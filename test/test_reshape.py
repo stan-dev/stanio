@@ -224,4 +224,12 @@ def test_preserve_1d():
     params2 = parse_header(header2)
     A2 = params2["A"]
     assert A2.extract_reshape(data2).shape == (1, 1000, 2, 1, 3)
-    assert A2.extract_reshape(data2.squeeze()).shape == (1000, 2, 1, 3)
+
+    extracted = A2.extract_reshape(data2.squeeze())
+    assert extracted.shape == (1000, 2, 1, 3)
+    base = params2["base"].extract_reshape(data2.squeeze())
+    for i in range(1000):
+        b = base[i]
+        np.testing.assert_almost_equal(
+            extracted[i], np.array([[[b, b, b * 2]], [[b * 3, b * 4, b * 5]]])
+        )
