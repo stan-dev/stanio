@@ -4,7 +4,6 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "stanio"
-version = "0.1.0"
 readme = "README.md"
 authors = [{ "name" = "Brian Ward", "email" = "bward@flatironinstitute.org" }]
 dependencies = ["numpy"]
@@ -15,7 +14,13 @@ classifiers = [
     "Development Status :: 4 - Beta",
     "Operating System :: OS Independent"
 ]
+dynamic = ["version"]
 
+[tool.setuptools.dynamic]
+version = {attr = "stanio.__version__"}
+
+[tool.setuptools]
+packages = ["stanio"]
 
 [project.optional-dependencies]
 test = [
@@ -33,5 +38,3 @@ source = ["stanio"]
 [tool.setuptools.package-data]
 "stanio" = ["py.typed"]
 
-[tool.setuptools.packages.find]
-where = ["."]
