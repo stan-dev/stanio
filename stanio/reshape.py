@@ -7,14 +7,14 @@ import numpy as np
 import numpy.typing as npt
 
 
-class ParameterType(Enum):
+class VariableType(Enum):
     SCALAR = 1  # real or integer
     COMPLEX = 2  # complex number - requires striding
     TUPLE = 3  # tuples - require recursive handling
 
 
 @dataclass
-class Parameter:
+class Variable:
     # name of the parameter as given in stan. For nested parameters, this is a dummy name
     name: str
     # where to start (resp. end) reading from the flattened array.
@@ -26,9 +26,9 @@ class Parameter:
     # For nested parameters, this will be the dimensions of the outermost array.
     dimensions: Tuple[int, ...]
     # type of the parameter
-    type: ParameterType
+    type: VariableType
     # list of nested parameters
-    contents: List["Parameter"]
+    contents: List["Variable"]
 
     def columns(self) -> Iterable[int]:
         return range(self.start_idx, self.end_idx)
@@ -41,34 +41,35 @@ class Parameter:
 
     # total size is elt_size * num_elts
 
-    def extract_reshape(
-        self, src: np.ndarray, *, offset: int = 0, original_shape: bool = True
-    ) -> npt.NDArray[Any]:
-        if original_shape:
-            dims = src.shape[:-1]
-        else:
-            dims = (-1,)
+    def _extract_helper(self, src: np.ndarray, offset: int = 0):
         start = self.start_idx + offset
         end = self.end_idx + offset
-        if self.type == ParameterType.SCALAR:
-            return src[..., start:end].reshape(*dims, *self.dimensions, order="F")
-        elif self.type == ParameterType.COMPLEX:
+        if self.type == VariableType.SCALAR:
+            return src[..., start:end].reshape(-1, *self.dimensions, order="F")
+        elif self.type == VariableType.COMPLEX:
             ret = src[..., start:end].reshape(-1, 2, *self.dimensions, order="F")
             ret = ret[:, ::2] + 1j * ret[:, 1::2]
-            return ret.squeeze().reshape(*dims, *self.dimensions, order="F")
-        elif self.type == ParameterType.TUPLE:
+            return ret.squeeze().reshape(-1, *self.dimensions, order="F")
+        elif self.type == VariableType.TUPLE:
             out: np.ndarray = np.empty(
                 (prod(src.shape[:-1]), prod(self.dimensions)), dtype=object
             )
             for idx in range(self.num_elts()):
                 off = idx * self.elt_size() // self.num_elts()
                 elts = [
-                    param.extract_reshape(src, offset=start + off, original_shape=False)
+                    param._extract_helper(src, offset=start + off)
                     for param in self.contents
                 ]
                 for i in range(elts[0].shape[0]):
                     out[i, idx] = tuple(elt[i] for elt in elts)
-            return out.reshape(*dims, *self.dimensions, order="F")
+            return out.reshape(-1, *self.dimensions, order="F")
+
+    def extract_reshape(self, src: np.ndarray) -> npt.NDArray[Any]:
+        out = self._extract_helper(src)
+        if src.ndim > 1:
+            return out.reshape(*src.shape[:-1], *self.dimensions, order="F")
+        else:
+            return out.squeeze(axis=0)
 
 
 def _munge_first_tuple(tup: str) -> str:
@@ -79,7 +80,7 @@ def _get_base_name(param: str) -> str:
     return param.split(".")[0].split(":")[0]
 
 
-def _from_header(header: str) -> List[Parameter]:
+def _from_header(header: str) -> List[Variable]:
     # appending __dummy ensures one extra iteration in the later loop
     header = header.strip() + ",__dummy"
     entries = header.split(",")
@@ -94,12 +95,12 @@ def _from_header(header: str) -> List[Parameter]:
             if ":" not in entry:
                 dims = entry.split(".")[1:]
                 if ".real" in entry or ".imag" in entry:
-                    type = ParameterType.COMPLEX
+                    type = VariableType.COMPLEX
                     dims = dims[:-1]
                 else:
-                    type = ParameterType.SCALAR
+                    type = VariableType.SCALAR
                 params.append(
-                    Parameter(
+                    Variable(
                         name=name,
                         start_idx=start_idx,
                         end_idx=i + 1,
@@ -115,12 +116,12 @@ def _from_header(header: str) -> List[Parameter]:
                 )
 
                 params.append(
-                    Parameter(
+                    Variable(
                         name=name,
                         start_idx=start_idx,
                         end_idx=i + 1,
                         dimensions=tuple(map(int, dims)),
-                        type=ParameterType.TUPLE,
+                        type=VariableType.TUPLE,
                         contents=_from_header(munged_header),
                     )
                 )
@@ -131,11 +132,11 @@ def _from_header(header: str) -> List[Parameter]:
     return params
 
 
-def parse_header(header: str) -> Dict[str, Parameter]:
+def parse_header(header: str) -> Dict[str, Variable]:
     return {param.name: param for param in _from_header(header)}
 
 
 def stan_variables(
-    parameters: Dict[str, Parameter], source: npt.NDArray[np.float64]
+    parameters: Dict[str, Variable], source: npt.NDArray[np.float64]
 ) -> Dict[str, npt.NDArray[Any]]:
     return {param.name: param.extract_reshape(source) for param in parameters.values()}

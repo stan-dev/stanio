@@ -197,3 +197,31 @@ def test_tuple_values(tuple_data):
         draw = np.random.randint(1000)
         chain = np.random.randint(4)
         check_tuples(tuple_data, chain, draw)
+
+
+def test_single_row():
+    header, data = read_csv(DATA / "edges" / "one_row.csv")
+    params = parse_header(header)
+    variables = stan_variables(params, data.squeeze())
+    assert variables["lp__"].shape == ()
+    z = variables["z"]
+    assert z.shape == (4, 3)
+    for i in range(4):
+        for j in range(3):
+            assert int(z[i, j]) == i + 1
+
+
+def test_preserve_1d():
+    header, data = read_csv(DATA / "edges" / "oned_opt.csv")
+    params = parse_header(header)
+    A = params["A"]
+    assert A.extract_reshape(data).shape == (1, 2, 1, 3)
+    assert A.extract_reshape(data.squeeze()).shape == (2, 1, 3)
+
+    assert len(A.columns()) == A.num_elts() == 2 * 1 * 3
+
+    header2, data2 = read_csv(DATA / "edges" / "oned_sample.csv")
+    params2 = parse_header(header2)
+    A2 = params2["A"]
+    assert A2.extract_reshape(data2).shape == (1, 1000, 2, 1, 3)
+    assert A2.extract_reshape(data2.squeeze()).shape == (1000, 2, 1, 3)
