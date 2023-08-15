@@ -216,10 +216,13 @@ def test_preserve_1d():
     params = parse_header(header)
     A = params["A"]
     dummy = params["dummy"]
+    dummy_tuple = params["dummy_tuple"]
     assert A.extract_reshape(data).shape == (1, 2, 1, 3)
     assert dummy.extract_reshape(data).shape == (1, 1, 1, 1)
+    assert dummy_tuple.extract_reshape(data).shape == (1, 1)
     assert A.extract_reshape(data.squeeze()).shape == (2, 1, 3)
     assert dummy.extract_reshape(data.squeeze()).shape == (1, 1, 1)
+    assert dummy_tuple.extract_reshape(data.squeeze()).shape == (1,)
 
     assert len(A.columns()) == A.num_elts() == 2 * 1 * 3
 
@@ -227,14 +230,18 @@ def test_preserve_1d():
     params2 = parse_header(header2)
     A2 = params2["A"]
     dummy2 = params2["dummy"]
+    dummy_tuple2 = params2["dummy_tuple"]
 
     assert A2.extract_reshape(data2).shape == (1, 1000, 2, 1, 3)
     assert dummy2.extract_reshape(data2).shape == (1, 1000, 1, 1, 1)
+    assert dummy_tuple2.extract_reshape(data2).shape == (1, 1000, 1)
 
     A_extracted = A2.extract_reshape(data2.squeeze())
     dummy_extracted = dummy2.extract_reshape(data2.squeeze())
+    dummy_tuple_extracted = dummy_tuple2.extract_reshape(data2.squeeze())
     assert A_extracted.shape == (1000, 2, 1, 3)
     assert dummy_extracted.shape == (1000, 1, 1, 1)
+    assert dummy_tuple_extracted.shape == (1000, 1)
 
     base = params2["base"].extract_reshape(data2.squeeze())
     for i in range(1000):
@@ -243,3 +250,4 @@ def test_preserve_1d():
             A_extracted[i], np.array([[[b, b, b * 2]], [[b * 3, b * 4, b * 5]]])
         )
         np.testing.assert_almost_equal(dummy_extracted[i, 0, 0, 0], b * 10)
+        assert_tuple_equal(dummy_tuple_extracted[i][0], (b * 11, b * 12))

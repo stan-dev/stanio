@@ -4,4 +4,6 @@ generated quantities {
                            {{base * 3, base * 4, base * 5}}};
 
   array[1,1,1] real dummy = {{{base*10}}};
+
+  array[1] tuple(real, array[1] real) dummy_tuple = {(base*11, {base*12})};
   }
