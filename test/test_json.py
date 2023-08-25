@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from stanio.json import write_stan_json
+from stanio.json import dump_stan_json, write_stan_json
 
 
 @pytest.fixture(scope="module")
@@ -163,3 +163,11 @@ def test_tuples(TMPDIR) -> None:
     file_tuple = os.path.join(TMPDIR, "tuple.json")
     write_stan_json(file_tuple, dict_tuples)
     compare_before_after(file_tuple, dict_tuples, dict_tuple_exp)
+
+
+def test_write_vs_dump(TMPDIR):
+    dict_list = {"a": [1.0, 2.0, 3.0]}
+    file_write = os.path.join(TMPDIR, "write.json")
+    write_stan_json(file_write, dict_list)
+    with open(file_write) as fd:
+        assert fd.read() == dump_stan_json(dict_list)
