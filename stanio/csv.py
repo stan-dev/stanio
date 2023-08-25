@@ -20,8 +20,8 @@ def read_csv(filenames: Union[str, List[str]]) -> Tuple[str, npt.NDArray[np.floa
                 pass
             if header == "":
                 header = file_header
-            else:
-                assert header == file_header, "Headers do not match"
+            elif header != file_header:
+                raise ValueError("Headers do not match")
             data[i] = np.loadtxt(fd, delimiter=",", comments="#")
 
     return header.strip(), np.stack(data, axis=0)
