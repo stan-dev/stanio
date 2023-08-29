@@ -33,7 +33,7 @@ def test_multiple_files() -> None:
 def test_mismatched_files() -> None:
     files = [str(DATA / "bernoulli" / f"output_{i}.csv") for i in range(1, 5)]
     files[1] = str(DATA / "bernoulli" / "output_more_variables.csv")
-    with pytest.raises(AssertionError, match="Headers do not match"):
+    with pytest.raises(ValueError, match="Headers do not match"):
         read_csv(files)
 
     files[1] = str(DATA / "bernoulli" / "output_missing_columns.csv")
