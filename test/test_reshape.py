@@ -4,8 +4,8 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from stanio.reshape import *
 from stanio.csv import read_csv
+from stanio.reshape import *
 
 HERE = Path(__file__).parent
 DATA = HERE / "data"

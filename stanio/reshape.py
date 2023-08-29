@@ -1,3 +1,9 @@
+"""
+Classes and functions for reshaping Stan output.
+
+Especially with the addition of tuples, Stan writes
+flat arrays of data with a rich internal structure.
+"""
 from dataclasses import dataclass
 from enum import Enum
 from math import prod
@@ -15,6 +21,17 @@ class VariableType(Enum):
 
 @dataclass
 class Variable:
+    """
+    This class represents a single output variable of a Stan model.
+
+    It contains information about the name, dimensions, and type of the
+    variable, as well as the indices of where that variable is located in
+    the flattened output array Stan models write.
+
+    Generally, this class should not be instantiated directly, but rather
+    created by the :func:`parse_header()` function.
+    """
+
     # name of the parameter as given in stan. For nested parameters, this is a dummy name
     name: str
     # where to start (resp. end) reading from the flattened array.
@@ -65,6 +82,29 @@ class Variable:
             return out.reshape(-1, *self.dimensions, order="F")
 
     def extract_reshape(self, src: np.ndarray) -> npt.NDArray[Any]:
+        """
+        Given an array where the final dimension is the flattened output of a
+        Stan model, (e.g. one row of a Stan CSV file), extract the variable
+        and reshape it to the correct type and dimensions.
+
+        This will most likely result in copies of the data being made if
+        the variable is not a scalar.
+
+        Parameters
+        ----------
+        src : np.ndarray
+            The array to extract from.
+
+            Indicies besides the final dimension are preserved
+            in the output.
+
+        Returns
+        -------
+        npt.NDArray[Any]
+            The extracted variable, reshaped to the correct dimensions.
+            If the variable is a tuple, this will be an object array,
+            otherwise it will have a dtype of either float64 or complex128.
+        """
         out = self._extract_helper(src)
         if src.ndim > 1:
             return out.reshape(*src.shape[:-1], *self.dimensions, order="F")
@@ -133,10 +173,46 @@ def _from_header(header: str) -> List[Variable]:
 
 
 def parse_header(header: str) -> Dict[str, Variable]:
+    """
+    Given a comma-separated list of names of Stan outputs, like
+    that from the header row of a CSV file, parse it into a dictionary of
+    :class:`Variable` objects.
+
+    Parameters
+    ----------
+    header : str
+        Comma separated list of Stan variables, including index information.
+        For example, an ``array[2] real foo` would be represented as
+        ``foo.1,foo.2``.
+
+    Returns
+    -------
+    Dict[str, Variable]
+        A dictionary mapping the base name of each variable to a :class:`Variable`.
+    """
     return {param.name: param for param in _from_header(header)}
 
 
 def stan_variables(
     parameters: Dict[str, Variable], source: npt.NDArray[np.float64]
 ) -> Dict[str, npt.NDArray[Any]]:
+    """
+    Given a dictionary of :class:`Variable` objects and a source array,
+    extract the variables from the source array and reshape them to the
+    correct dimensions.
+
+    Parameters
+    ----------
+    parameters : Dict[str, Variable]
+        A dictionary of :class:`Variable` objects,
+        like that returned by :func:`parse_header()`.
+    source : npt.NDArray[np.float64]
+        The array to extract from.
+
+    Returns
+    -------
+    Dict[str, npt.NDArray[Any]]
+        A dictionary mapping the base name of each variable to the extracted
+        and reshaped data.
+    """
     return {param.name: param.extract_reshape(source) for param in parameters.values()}
