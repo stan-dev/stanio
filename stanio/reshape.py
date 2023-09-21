@@ -47,6 +47,23 @@ class Variable:
     # list of nested parameters
     contents: List["Variable"]
 
+    def dtype(self, top=True):
+        if self.type == VariableType.TUPLE:
+            elts = [
+                (str(i + 1), param.dtype(top=False))
+                for i, param in enumerate(self.contents)
+            ]
+            dtype = np.dtype(elts)
+        elif self.type == VariableType.SCALAR:
+            dtype = np.float64
+        elif self.type == VariableType.COMPLEX:
+            dtype = np.complex128
+
+        if top:
+            return dtype
+        else:
+            return np.dtype((dtype, self.dimensions))
+
     def columns(self) -> Iterable[int]:
         return range(self.start_idx, self.end_idx)
 
@@ -81,7 +98,7 @@ class Variable:
                     out[i, idx] = tuple(elt[i] for elt in elts)
             return out.reshape(-1, *self.dimensions, order="F")
 
-    def extract_reshape(self, src: np.ndarray) -> npt.NDArray[Any]:
+    def extract_reshape(self, src: np.ndarray, object=True) -> npt.NDArray[Any]:
         """
         Given an array where the final dimension is the flattened output of a
         Stan model, (e.g. one row of a Stan CSV file), extract the variable
@@ -98,6 +115,10 @@ class Variable:
             Indicies besides the final dimension are preserved
             in the output.
 
+        object : bool
+            If True, the output of tuple types will be an object array,
+            otherwise it will use custom dtypes to represent tuples.
+
         Returns
         -------
         npt.NDArray[Any]
@@ -106,10 +127,14 @@ class Variable:
             otherwise it will have a dtype of either float64 or complex128.
         """
         out = self._extract_helper(src)
+        if not object:
+            out = out.astype(self.dtype())
         if src.ndim > 1:
-            return out.reshape(*src.shape[:-1], *self.dimensions, order="F")
+            out = out.reshape(*src.shape[:-1], *self.dimensions, order="F")
         else:
-            return out.squeeze(axis=0)
+            out = out.squeeze(axis=0)
+
+        return out
 
 
 def _munge_first_tuple(tup: str) -> str:
@@ -194,7 +219,10 @@ def parse_header(header: str) -> Dict[str, Variable]:
 
 
 def stan_variables(
-    parameters: Dict[str, Variable], source: npt.NDArray[np.float64]
+    parameters: Dict[str, Variable],
+    source: npt.NDArray[np.float64],
+    *,
+    object: bool = True,
 ) -> Dict[str, npt.NDArray[Any]]:
     """
     Given a dictionary of :class:`Variable` objects and a source array,
@@ -208,6 +236,9 @@ def stan_variables(
         like that returned by :func:`parse_header()`.
     source : npt.NDArray[np.float64]
         The array to extract from.
+    object : bool
+        If True, the output of tuple types will be an object array,
+        otherwise it will use custom dtypes to represent tuples.
 
     Returns
     -------
@@ -215,4 +246,7 @@ def stan_variables(
         A dictionary mapping the base name of each variable to the extracted
         and reshaped data.
     """
-    return {param.name: param.extract_reshape(source) for param in parameters.values()}
+    return {
+        param.name: param.extract_reshape(source, object=object)
+        for param in parameters.values()
+    }

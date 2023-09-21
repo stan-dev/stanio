@@ -12,12 +12,12 @@ DATA = HERE / "data"
 
 
 # see file data/rectangles/output.stan
-@pytest.fixture(scope="module")
-def rect_data():
+@pytest.fixture(scope="module", params=[True, False], ids=["use_object", "use_dtype"])
+def rect_data(request):
     files = [DATA / "rectangles" / f"output_{i}.csv" for i in range(1, 5)]
     header, data = read_csv(files)
     params = parse_header(header)
-    yield stan_variables(params, data)
+    yield stan_variables(params, data, object=request.param)
 
 
 def test_basic_shapes(rect_data):
@@ -91,43 +91,93 @@ def test_basic_values(rect_data):
 
 
 # see file data/tuples/output.stan
-@pytest.fixture(scope="module")
-def tuple_data():
+@pytest.fixture(scope="module", params=[True, False], ids=["use_object", "use_dtype"])
+def tuple_data(request):
     files = [DATA / "tuples" / f"output_{i}.csv" for i in range(1, 5)]
     header, data = read_csv(files)
     params = parse_header(header)
-    yield stan_variables(params, data)
+    yield stan_variables(params, data, object=request.param)
 
 
 def test_tuple_shapes(tuple_data):
-    assert isinstance(tuple_data["pair"][0, 0], tuple)
     assert len(tuple_data["pair"][0, 0]) == 2
 
-    assert isinstance(tuple_data["nested"][0, 0], tuple)
     assert len(tuple_data["nested"][0, 0]) == 2
-    assert isinstance(tuple_data["nested"][0, 0][1], tuple)
     assert len(tuple_data["nested"][0, 0][1]) == 2
 
     assert tuple_data["arr_pair"].shape == (4, 1000, 2)
-    assert isinstance(tuple_data["arr_pair"][0, 0, 0], tuple)
 
     assert tuple_data["arr_very_nested"].shape == (4, 1000, 3)
-    assert isinstance(tuple_data["arr_very_nested"][0, 0, 0], tuple)
-    assert isinstance(tuple_data["arr_very_nested"][0, 0, 0][0], tuple)
-    assert isinstance(tuple_data["arr_very_nested"][0, 0, 0][0][1], tuple)
 
     assert tuple_data["arr_2d_pair"].shape == (4, 1000, 3, 2)
-    assert isinstance(tuple_data["arr_2d_pair"][0, 0, 0, 0], tuple)
 
     assert tuple_data["ultimate"].shape == (4, 1000, 2, 3)
-    assert isinstance(tuple_data["ultimate"][0, 0, 0, 0], tuple)
     assert tuple_data["ultimate"][0, 0, 0, 0][0].shape == (2,)
-    assert isinstance(tuple_data["ultimate"][0, 0, 0, 0][0][0], tuple)
     assert tuple_data["ultimate"][0, 0, 0, 0][0][0][1].shape == (2,)
     assert tuple_data["ultimate"][0, 0, 0, 0][1].shape == (4, 5)
 
 
+def check_tuple_shapes_objects(tuple_data):
+    assert isinstance(tuple_data["pair"][0, 0], tuple)
+
+    assert isinstance(tuple_data["nested"][0, 0], tuple)
+    assert isinstance(tuple_data["nested"][0, 0][1], tuple)
+
+    assert isinstance(tuple_data["arr_pair"][0, 0, 0], tuple)
+
+    assert isinstance(tuple_data["arr_very_nested"][0, 0, 0], tuple)
+    assert isinstance(tuple_data["arr_very_nested"][0, 0, 0][0], tuple)
+    assert isinstance(tuple_data["arr_very_nested"][0, 0, 0][0][1], tuple)
+
+    assert isinstance(tuple_data["arr_2d_pair"][0, 0, 0, 0], tuple)
+
+    assert isinstance(tuple_data["ultimate"][0, 0, 0, 0], tuple)
+    assert isinstance(tuple_data["ultimate"][0, 0, 0, 0][0][0], tuple)
+
+
+def check_tuple_shapes_custom_dtypes(tuple_data):
+    for value in tuple_data.values():
+        assert not value.dtype.hasobject
+
+    pair_dtype = np.dtype([("1", "f8"), ("2", "f8")])
+    assert tuple_data["pair"].dtype == pair_dtype
+
+    nested_dtype = np.dtype([("1", "f8"), ("2", [("1", "f8"), ("2", "c16")])])
+    assert tuple_data["nested"].dtype == nested_dtype
+    assert tuple_data["nested"][0, 0][1].dtype == nested_dtype[1]
+
+    assert tuple_data["arr_pair"].dtype == pair_dtype
+
+    very_nested_dtype = np.dtype(
+        [
+            ("1", nested_dtype),
+            ("2", "f8"),
+        ]
+    )
+    assert tuple_data["arr_very_nested"].dtype == very_nested_dtype
+    assert tuple_data["arr_very_nested"][0, 0, 0][0].dtype == nested_dtype
+    assert tuple_data["arr_very_nested"][0, 0, 0][0][1].dtype == nested_dtype[1]
+
+    ultimate_dtype = np.dtype(
+        [
+            ("1", ([("1", "f8"), ("2", "(2,)f8")], (2,))),
+            ("2", "(4,5)f8"),
+        ]
+    )
+    assert tuple_data["ultimate"].dtype == ultimate_dtype
+
+
+def test_tuple_dtypes(tuple_data):
+    if isinstance(tuple_data["pair"][0, 0], tuple):
+        check_tuple_shapes_objects(tuple_data)
+    else:
+        check_tuple_shapes_custom_dtypes(tuple_data)
+
+
 def assert_tuple_equal(t1, t2):
+    if hasattr(t1, "dtype") and t1.dtype.kind == "V":
+        t1 = t1.tolist()
+
     assert len(t1) == len(t2)
     for x, y in zip(t1, t2):
         if isinstance(x, tuple):
@@ -140,7 +190,7 @@ def check_tuples(tuple_data, chain, draw):
     base = tuple_data["base"][chain, draw]
     base_i = tuple_data["base_i"][chain, draw]
     pair_exp = (base, 2 * base)
-    np.testing.assert_almost_equal(tuple_data["pair"][chain, draw], pair_exp)
+    assert_tuple_equal(tuple_data["pair"][chain, draw], pair_exp)
     nested_exp = (base * 3, (base_i, 4j * base))
     assert_tuple_equal(tuple_data["nested"][chain, draw], nested_exp)
 
