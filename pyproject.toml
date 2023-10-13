@@ -16,6 +16,10 @@ classifiers = [
 ]
 dynamic = ["version"]
 
+[project.urls]
+"Homepage" = "https://github.com/wardbrian/stanio"
+"Bug Tracker" = "https://github.com/wardbrian/stanio/issues"
+
 [tool.setuptools.dynamic]
 version = {attr = "stanio.__version__"}
 
