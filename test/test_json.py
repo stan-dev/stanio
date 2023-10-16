@@ -124,12 +124,12 @@ def test_special_values(TMPDIR) -> None:
     dict_inf_nan = {
         "a": np.array(
             [
-                [-np.inf, np.inf, np.NaN],
+                [-np.inf, np.inf, np.nan],
                 [-float("inf"), float("inf"), float("NaN")],
                 [
                     np.float32(-np.inf),
                     np.float32(np.inf),
-                    np.float32(np.NaN),
+                    np.float32(np.nan),
                 ],
                 [1e200 * -1e200, 1e220 * 1e200, -np.nan],
             ]
