@@ -4,6 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "stanio"
+description = "Utilities for preparing Stan inputs and processing Stan outputs"
 readme = "README.md"
 authors = [{ "name" = "Brian Ward", "email" = "bward@flatironinstitute.org" }]
 dependencies = ["numpy"]
