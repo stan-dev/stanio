@@ -5,7 +5,6 @@ import tempfile
 from typing import Any, Dict, List
 
 import numpy as np
-import pandas as pd
 import pytest
 
 from stanio.json import dump_stan_json, write_stan_json
@@ -75,6 +74,7 @@ def test_none(TMPDIR) -> None:
 
 
 def test_pandas(TMPDIR) -> None:
+    pd = pytest.importorskip("pandas")
     arr = np.repeat(3, 4)
     series = pd.Series(arr)
     dict_vec_pd = {"a": series}
