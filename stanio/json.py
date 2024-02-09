@@ -31,7 +31,17 @@ def process_value(val: Any) -> Any:
         or "xarray" in original_module
         or "pandas" in original_module
     ):
-        return process_value(np.asanyarray(val).tolist())
+        numpy_val = np.asanyarray(val)
+        # fast paths for numeric types
+        if numpy_val.dtype.kind in "iuf":
+            return numpy_val.tolist()
+        if numpy_val.dtype.kind == "c":
+            return np.stack([numpy_val.real, numpy_val.imag], axis=-1).tolist()
+        if numpy_val.dtype.kind == "b":
+            return numpy_val.astype(int).tolist()
+
+        # should only be object arrays (tuples, etc)
+        return process_value(numpy_val.tolist())
 
     return val
 
