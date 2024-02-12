@@ -57,9 +57,9 @@ def test_basic_array(TMPDIR) -> None:
 
 
 def test_bool(TMPDIR) -> None:
-    dict_bool = {"a": False, "b": True}
+    dict_bool = {"a": False, "b": True, "c": np.array([True, False])}
     file_bool = os.path.join(TMPDIR, "bool.json")
-    dict_exp = {"a": 0, "b": 1}
+    dict_exp = {"a": 0, "b": 1, "c": [1, 0]}
     after = compare_before_after(file_bool, dict_bool, dict_exp)
     assert isinstance(after["a"], int)
     assert not isinstance(after["a"], bool)
@@ -135,15 +135,29 @@ def test_special_values(TMPDIR) -> None:
             ]
         )
     }
+
+    # we want very specific values here
+    json_string = dump_stan_json(dict_inf_nan)
+    assert json_string.count("Infinity") == 8
+    assert json_string.count("NaN") == 4
+    assert json_string.count("-Infinity") == 4
+
     dict_inf_nan_exp = {"a": [[-np.inf, np.inf, np.nan]] * 4}
     file_fin = os.path.join(TMPDIR, "inf.json")
     compare_before_after(file_fin, dict_inf_nan, dict_inf_nan_exp)
 
 
 def test_complex_numbers(TMPDIR) -> None:
-    dict_complex = {"a": np.array([np.complex64(3), 3 + 4j])}
+    dict_complex = {"a": [3 + 0j, 3 + 4j]}
     dict_complex_exp = {"a": [[3, 0], [3, 4]]}
     file_complex = os.path.join(TMPDIR, "complex.json")
+    compare_before_after(file_complex, dict_complex, dict_complex_exp)
+
+
+def test_complex_numbers_np(TMPDIR) -> None:
+    dict_complex = {"a": np.array([np.complex64(3), 3 + 4j])}
+    dict_complex_exp = {"a": [[3, 0], [3, 4]]}
+    file_complex = os.path.join(TMPDIR, "complex_np.json")
     compare_before_after(file_complex, dict_complex, dict_complex_exp)
 
 

@@ -1,7 +1,17 @@
 """
 Utilities for writing Stan Json files
 """
-import json
+try:
+    import ujson as json
+
+    uj_version = tuple(map(int, json.__version__.split(".")))
+    if uj_version < (5, 5, 0):
+        raise ImportError("ujson version too old")
+    UJSON_AVAILABLE = True
+except:
+    UJSON_AVAILABLE = False
+    import json
+
 from typing import Any, Mapping
 
 import numpy as np
@@ -31,7 +41,17 @@ def process_value(val: Any) -> Any:
         or "xarray" in original_module
         or "pandas" in original_module
     ):
-        return process_value(np.asanyarray(val).tolist())
+        numpy_val = np.asanyarray(val)
+        # fast paths for numeric types
+        if numpy_val.dtype.kind in "iuf":
+            return numpy_val.tolist()
+        if numpy_val.dtype.kind == "c":
+            return np.stack([numpy_val.real, numpy_val.imag], axis=-1).tolist()
+        if numpy_val.dtype.kind == "b":
+            return numpy_val.astype(int).tolist()
+
+        # should only be object arrays (tuples, etc)
+        return process_value(numpy_val.tolist())
 
     return val
 
@@ -75,5 +95,8 @@ def write_stan_json(path: str, data: Mapping[str, Any]) -> None:
         copied before type conversion, not modified
     """
     with open(path, "w") as fd:
-        for chunk in json.JSONEncoder().iterencode(process_dictionary(data)):
-            fd.write(chunk)
+        if UJSON_AVAILABLE:
+            json.dump(process_dictionary(data), fd)
+        else:
+            for chunk in json.JSONEncoder().iterencode(process_dictionary(data)):
+                fd.write(chunk)

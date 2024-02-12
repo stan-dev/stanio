@@ -11,13 +11,13 @@ on:
 
 jobs:
   required:
-    name: "${{matrix.os}} / ${{matrix.python-version}} / numpy_nightly: ${{matrix.numpy_nightly}}"
+    name: "${{matrix.os}} / ${{matrix.python-version}} / ujson: ${{matrix.ujson}}"
     runs-on: ${{matrix.os}}
     strategy:
       matrix:
         os: [ubuntu-latest]
         python-version: [3.8, "3.12"]
-        numpy_nightly: [false, true]
+        ujson: [false, true]
     steps:
       - name: Check out github
         uses: actions/checkout@v4
@@ -35,10 +35,10 @@ jobs:
         run: |
           python -m pip install .[test]
 
-      - name: Install numpy
-        if: ${{ matrix.numpy_nightly }}
+      - name: Install ujson
+        if: ${{ matrix.ujson }}
         run: |
-          pip install -i https://pypi.anaconda.org/scientific-python-nightly-wheels/simple -U numpy
+          pip install -U ujson
 
       - name: Run tests
         run: |
