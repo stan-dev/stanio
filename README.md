@@ -1,7 +1,9 @@
 # StanIO
 
-A set of functions for data-wrangling in the formats used by
+A set of Python functions for data-wrangling in the formats used by
 the [Stan](https://mc-stan.org) probabalistic programming language.
+
+It is primarily developed for use in [cmdstanpy](https://github.com/stan-dev/cmdstanpy).
 
 ## Features
 
