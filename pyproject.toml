@@ -6,36 +6,30 @@ build-backend = "setuptools.build_meta"
 name = "stanio"
 description = "Utilities for preparing Stan inputs and processing Stan outputs"
 readme = "README.md"
-authors = [{ "name" = "Brian Ward", "email" = "bward@flatironinstitute.org" }]
+authors = [{ name = "Stan Dev Team" }]
 dependencies = ["numpy"]
 requires-python = ">=3.8"
 license = { text = "BSD-3-Clause" }
 classifiers = [
     "Programming Language :: Python :: 3",
     "Development Status :: 4 - Beta",
-    "Operating System :: OS Independent"
+    "Operating System :: OS Independent",
 ]
 dynamic = ["version"]
 
 [project.urls]
-"Homepage" = "https://github.com/wardbrian/stanio"
-"Bug Tracker" = "https://github.com/wardbrian/stanio/issues"
+"Homepage" = "https://github.com/stan-dev/stanio"
+"Bug Tracker" = "https://github.com/stan-dev/stanio/issues"
 
 [tool.setuptools.dynamic]
-version = {attr = "stanio.__version__"}
+version = { attr = "stanio.__version__" }
 
 [tool.setuptools]
 packages = ["stanio"]
 
 [project.optional-dependencies]
-test = [
-    "pandas",
-    "pytest",
-    "pytest-cov",
-]
-ujson = [
-    "ujson>=5.5.0"
-]
+test = ["pandas", "pytest", "pytest-cov"]
+ujson = ["ujson>=5.5.0"]
 
 [tool.isort]
 profile = "black"
@@ -45,4 +39,3 @@ source = ["stanio"]
 
 [tool.setuptools.package-data]
 "stanio" = ["py.typed"]
-
