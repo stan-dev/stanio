@@ -167,19 +167,21 @@ def test_tuples(TMPDIR) -> None:
         "b": [(1, [2, 3]), (4, [5, 6])],
         "c": ((1, np.array([1, 2.0, 3])), (3, np.array([1, 2, 3]))),
         "m": {"1": 1, "2": [2, 3]},
+        "np": np.array([(1, 2, 3)], dtype="i,i,i"),
     }
     dict_tuple_exp = {
         "a": {"1": 1, "2": 2, "3": 3},
         "b": [{"1": 1, "2": [2, 3]}, {"1": 4, "2": [5, 6]}],
         "c": {"1": {"1": 1, "2": [1, 2.0, 3]}, "2": {"1": 3, "2": [1, 2, 3]}},
         "m": {"1": 1, "2": [2, 3]},
+        "np": [{"1": 1, "2": 2, "3": 3}],
     }
     file_tuple = os.path.join(TMPDIR, "tuple.json")
     write_stan_json(file_tuple, dict_tuples)
     compare_before_after(file_tuple, dict_tuples, dict_tuple_exp)
 
 
-def test_write_vs_dump(TMPDIR):
+def test_write_vs_dump(TMPDIR) -> None:
     dict_list = {"a": [1.0, 2.0, 3.0]}
     file_write = os.path.join(TMPDIR, "write.json")
     write_stan_json(file_write, dict_list)

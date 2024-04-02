@@ -6,7 +6,7 @@ try:
 
     uj_version = tuple(map(int, json.__version__.split(".")))
     if uj_version < (5, 5, 0):
-        raise ImportError("ujson version too old")
+        raise ImportError("ujson version too old")  # pragma: no cover
     UJSON_AVAILABLE = True
 except:
     UJSON_AVAILABLE = False
