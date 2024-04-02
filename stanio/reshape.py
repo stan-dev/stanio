@@ -47,7 +47,7 @@ class Variable:
     # list of nested parameters
     contents: List["Variable"]
 
-    def dtype(self, top=True):
+    def dtype(self, top: bool = True) -> np.dtype:
         if self.type == VariableType.TUPLE:
             elts = [
                 (str(i + 1), param.dtype(top=False))
@@ -75,7 +75,7 @@ class Variable:
 
     # total size is elt_size * num_elts
 
-    def _extract_helper(self, src: np.ndarray, offset: int = 0):
+    def _extract_helper(self, src: np.ndarray, offset: int = 0) -> np.ndarray:
         start = self.start_idx + offset
         end = self.end_idx + offset
         if self.type == VariableType.SCALAR:
@@ -98,7 +98,7 @@ class Variable:
                     out[i, idx] = tuple(elt[i] for elt in elts)
             return out.reshape(-1, *self.dimensions, order="F")
 
-    def extract_reshape(self, src: np.ndarray, object=True) -> npt.NDArray[Any]:
+    def extract_reshape(self, src: np.ndarray, object: bool = True) -> npt.NDArray[Any]:
         """
         Given an array where the final dimension is the flattened output of a
         Stan model, (e.g. one row of a Stan CSV file), extract the variable
