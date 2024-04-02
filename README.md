@@ -1,5 +1,7 @@
 # StanIO
 
+[![codecov](https://codecov.io/gh/stan-dev/stanio/graph/badge.svg?token=P93MLO21FK)](https://codecov.io/gh/stan-dev/stanio) [![Tests](https://github.com/stan-dev/stanio/actions/workflows/test.yaml/badge.svg)](https://github.com/stan-dev/stanio/actions/workflows/test.yaml)
+
 A set of Python functions for data-wrangling in the formats used by
 the [Stan](https://mc-stan.org) probabalistic programming language.
 
