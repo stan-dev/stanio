@@ -46,7 +46,7 @@ def process_value(val: Any) -> Any:
         if numpy_val.dtype.kind in "iuf":
             return numpy_val.tolist()
         if numpy_val.dtype.kind == "c":
-            return np.stack([numpy_val.real, numpy_val.imag], axis=-1).tolist()
+            return np.stack([np.asarray(numpy_val.real), np.asarray(numpy_val.imag)], axis=-1).tolist()
         if numpy_val.dtype.kind == "b":
             return numpy_val.astype(int).tolist()
 

@@ -161,6 +161,15 @@ def test_complex_numbers_np(TMPDIR) -> None:
     compare_before_after(file_complex, dict_complex, dict_complex_exp)
 
 
+def test_complex_numbers_np_matrix(TMPDIR) -> None:
+    a_raw = np.random.rand(21, 21, 2)
+    a = np.matrix(a_raw[:, :, 0] + 1j * a_raw[:, :, 1])
+    dict_complex = {"a": a}
+    dict_complex_exp = {"a": a_raw}
+    file_complex = os.path.join(TMPDIR, "complex_np_mat.json")
+    compare_before_after(file_complex, dict_complex, dict_complex_exp)
+
+
 def test_tuples(TMPDIR) -> None:
     dict_tuples = {
         "a": (1, 2, 3),
